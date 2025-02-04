@@ -731,4 +731,122 @@ Entry_2:
   Command: nmap --script "oracle-tns-version" -p 1521 -T4 -sV {IP}
 ```
 
+## 2049 NFS
+```
+Protocol_Name: NFS    #Protocol Abbreviation if there is one.
+Port_Number:  2049     #Comma separated if there is more than one.
+Protocol_Description: Network File System         #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for NFS
+  Note: |
+    NFS is a system designed for client/server that enables users to seamlessly access files over a network as though these files were located within a local directory.
+
+    #apt install nfs-common
+    showmount 10.10.10.180      ~or~showmount -e 10.10.10.180
+    should show you available shares (example /home)
+
+    mount -t nfs -o ver=2 10.10.10.180:/home /mnt/
+    cd /mnt
+    nano into /etc/passwd and change the uid (probably 1000 or 1001) to match the owner of the files if you are not able to get in
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/nfs-service-pentesting.html
+
+Entry_2:
+  Name: Nmap
+  Description: Nmap with NFS Scripts
+  Command: nmap --script=nfs-ls.nse,nfs-showmount.nse,nfs-statfs.nse -p 2049 {IP}
+```
+
+## 3306 MySQL
+```
+Protocol_Name: MySql    #Protocol Abbreviation if there is one.
+Port_Number:  3306     #Comma separated if there is more than one.
+Protocol_Description: MySql     #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for MySql
+  Note: |
+    MySQL is a freely available open source Relational Database Management System (RDBMS) that uses Structured Query Language (SQL).
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-mysql.html
+
+Entry_2:
+  Name: Nmap
+  Description: Nmap with MySql Scripts
+  Command: nmap --script=mysql-databases.nse,mysql-empty-password.nse,mysql-enum.nse,mysql-info.nse,mysql-variables.nse,mysql-vuln-cve2012-2122.nse {IP} -p 3306
+
+Entry_3:
+  Name: MySql
+  Description: Attempt to connect to mysql server
+  Command: mysql -h {IP} -u {Username}@localhost
+
+Entry_4:
+  Name: MySql consolesless mfs enumeration
+  Description: MySql enumeration without the need to run msfconsole
+  Note: sourced from https://github.com/carlospolop/legion
+  Command: msfconsole -q -x 'use auxiliary/scanner/mysql/mysql_version; set RHOSTS {IP}; set RPORT 3306; run; exit' && msfconsole -q -x 'use auxiliary/scanner/mysql/mysql_authbypass_hashdump; set RHOSTS {IP}; set RPORT 3306; run; exit' && msfconsole -q -x 'use auxiliary/admin/mysql/mysql_enum; set RHOSTS {IP}; set RPORT 3306; run; exit' && msfconsole -q -x 'use auxiliary/scanner/mysql/mysql_hashdump; set RHOSTS {IP}; set RPORT 3306; run; exit' && msfconsole -q -x 'use auxiliary/scanner/mysql/mysql_schemadump; set RHOSTS {IP}; set RPORT 3306; run; exit'
+```
+
+## 3389 RDP
+```
+Protocol_Name: RDP    #Protocol Abbreviation if there is one.
+Port_Number:  3389     #Comma separated if there is more than one.
+Protocol_Description: Remote Desktop Protocol         #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for RDP
+  Note: |
+    Developed by Microsoft, the Remote Desktop Protocol (RDP) is designed to enable a graphical interface connection between computers over a network. To establish such a connection, RDP client software is utilized by the user, and concurrently, the remote computer is required to operate RDP server software. This setup allows for the seamless control and access of a distant computer's desktop environment, essentially bringing its interface to the user's local device.
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-rdp.html
+
+Entry_2:
+  Name: Nmap
+  Description: Nmap with RDP Scripts
+  Command: nmap --script "rdp-enum-encryption or rdp-vuln-ms12-020 or rdp-ntlm-info" -p 3389 -T4 {IP}
+```
+
+## 5985,5986 WinRM
+```
+Protocol_Name: WinRM    #Protocol Abbreviation if there is one.
+Port_Number:  5985     #Comma separated if there is more than one.
+Protocol_Description: Windows Remote Managment        #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for WinRM
+  Note: |
+    Windows Remote Management (WinRM) is a Microsoft protocol that allows remote management of Windows machines over HTTP(S) using SOAP. On the backend it's utilising WMI, so you can think of it as an HTTP based API for WMI.
+
+    sudo gem install winrm winrm-fs colorize stringio
+    git clone https://github.com/Hackplayers/evil-winrm.git
+    cd evil-winrm
+    ruby evil-winrm.rb -i 192.168.1.100 -u Administrator -p ‘MySuperSecr3tPass123!’
+
+    https://kalilinuxtutorials.com/evil-winrm-hacking-pentesting/
+
+    ruby evil-winrm.rb -i 10.10.10.169 -u melanie -p 'Welcome123!' -e /root/Desktop/Machines/HTB/Resolute/
+    ^^so you can upload binary's from that directory        or -s to upload scripts (sherlock)
+    menu
+    invoke-binary `tab`
+
+    #python3
+    import winrm
+    s = winrm.Session('windows-host.example.com', auth=('john.smith', 'secret'))
+    print(s.run_cmd('ipconfig'))
+    print(s.run_ps('ipconfig'))
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/5985-5986-pentesting-winrm.html
+
+Entry_2:
+  Name: Hydra Brute Force
+  Description: Need User
+  Command: hydra -t 1 -V -f -l {Username} -P {Big_Passwordlist} rdp://{IP}
+```
+
+
 
