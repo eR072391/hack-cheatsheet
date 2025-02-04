@@ -297,3 +297,141 @@ Entry_12:
   Description: Simple Scan with Ffuf for discovering additional vhosts
   Command: ffuf -w {Subdomain_List}:FUZZ -u {Web_Proto}://{Domain_Name} -H "Host:FUZZ.{Domain_Name}" -c -mc all {Ffuf_Filters}
 ```
+
+## 88 Kerberos
+```
+Protocol_Name: Kerberos    #Protocol Abbreviation if there is one.
+Port_Number:  88   #Comma separated if there is more than one.
+Protocol_Description: AD Domain Authentication         #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for Kerberos
+  Note: |
+    Kerberos operates on a principle where it authenticates users without directly managing their access to resources. This is an important distinction because it underlines the protocol's role in security frameworks.
+    In environments like **Active Directory**, Kerberos is instrumental in establishing the identity of users by validating their secret passwords. This process ensures that each user's identity is confirmed before they interact with network resources. However, Kerberos does not extend its functionality to evaluate or enforce the permissions a user has over specific resources or services. Instead, it provides a secure way of authenticating users, which is a critical first step in the security process.
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-kerberos-88/index.html
+
+Entry_2:
+  Name: Pre-Creds
+  Description: Brute Force to get Usernames
+  Command: nmap -p 88 --script=krb5-enum-users --script-args krb5-enum-users.realm="{Domain_Name}",userdb={Big_Userlist} {IP}
+
+Entry_3:
+  Name: With Usernames
+  Description: Brute Force with Usernames and Passwords
+  Note: consider git clone https://github.com/ropnop/kerbrute.git ./kerbrute -h
+
+Entry_4:
+  Name: With Creds
+  Description: Attempt to get a list of user service principal names
+  Command: GetUserSPNs.py -request -dc-ip {IP} active.htb/svc_tgs
+```
+
+## 110,995 POP
+```
+Protocol_Name:  POP   #Protocol Abbreviation if there is one.
+Port_Number:  110     #Comma separated if there is more than one.
+Protocol_Description: Post Office Protocol         #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for POP
+  Note: |
+    Post Office Protocol (POP) is described as a protocol within the realm of computer networking and the Internet, which is utilized for the extraction and retrieval of email from a remote mail server**, making it accessible on the local device. Positioned within the application layer of the OSI model, this protocol enables users to fetch and receive email. The operation of POP clients typically involves establishing a connection to the mail server, downloading all messages, storing these messages locally on the client system, and subsequently removing them from the server. Although there are three iterations of this protocol, POP3 stands out as the most prevalently employed version.
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-pop.html
+
+Entry_2:
+  Name: Banner Grab
+  Description: Banner Grab 110
+  Command: nc -nv {IP} 110
+
+Entry_3:
+  Name: Banner Grab 995
+  Description: Grab Banner Secure
+  Command: openssl s_client -connect {IP}:995 -crlf -quiet
+
+Entry_4:
+  Name: Nmap
+  Description: Scan for POP info
+  Command: nmap --script "pop3-capabilities or pop3-ntlm-info" -sV -p 110 {IP}
+
+Entry_5:
+  Name: Hydra Brute Force
+  Description: Need User
+  Command: hydra -l {Username} -P {Big_Passwordlist} -f {IP} pop3 -V
+
+Entry_6:
+  Name: consolesless mfs enumeration
+  Description: POP3 enumeration without the need to run msfconsole
+  Note: sourced from https://github.com/carlospolop/legion
+  Command: msfconsole -q -x 'use auxiliary/scanner/pop3/pop3_version; set RHOSTS {IP}; set RPORT 110; run; exit'
+```
+
+## 111 Portmapper
+```
+Protocol_Name: Portmapper    #Protocol Abbreviation if there is one.
+Port_Number:  43     #Comma separated if there is more than one.
+Protocol_Description: PM or RPCBind        #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for PortMapper
+  Note: |
+    Portmapper is a service that is utilized for mapping network service ports to RPC (Remote Procedure Call) program numbers. It acts as a critical component in Unix-based systems, facilitating the exchange of information between these systems. The port associated with Portmapper is frequently scanned by attackers as it can reveal valuable information. This information includes the type of Unix Operating System (OS) running and details about the services that are available on the system. Additionally, Portmapper is commonly used in conjunction with NFS (Network File System), NIS (Network Information Service), and other RPC-based services to manage network services effectively.
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-rpcbind.html
+
+Entry_2:
+  Name: rpc info
+  Description: May give netstat-type info
+  Command: whois -h {IP} -p 43 {Domain_Name} && echo {Domain_Name} | nc -vn {IP} 43
+
+Entry_3:
+  Name: nmap
+  Description: May give netstat-type info
+  Command: nmap -sSUC -p 111 {IP}
+```
+
+### 113 Ident
+```
+Protocol_Name: Ident    #Protocol Abbreviation if there is one.
+Port_Number:  113     #Comma separated if there is more than one.
+Protocol_Description: Identification Protocol         #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for Ident
+  Note: |
+    The Ident Protocol is used over the Internet to associate a TCP connection with a specific user. Originally designed to aid in network management and security, it operates by allowing a server to query a client on port 113 to request information about the user of a particular TCP connection.
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/113-pentesting-ident.html
+
+Entry_2:
+  Name: Enum Users
+  Description: Enumerate Users
+  Note: apt install ident-user-enum    ident-user-enum {IP} 22 23 139 445 (try all open ports)
+```
+
+### 123 NTP
+```
+Protocol_Name: NTP    #Protocol Abbreviation if there is one.
+Port_Number:  123     #Comma separated if there is more than one.
+Protocol_Description: Network Time Protocol         #Protocol Abbreviation Spelled out
+
+Entry_1:
+  Name: Notes
+  Description: Notes for NTP
+  Note: |
+    The Network Time Protocol (NTP) ensures computers and network devices across variable-latency networks sync their clocks accurately. It's vital for maintaining precise timekeeping in IT operations, security, and logging. NTP's accuracy is essential, but it also poses security risks if not properly managed.
+
+    https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-ntp.html
+
+Entry_2:
+  Name: Nmap
+  Description: Enumerate NTP
+  Command: nmap -sU -sV --script "ntp* and (discovery or vuln) and not (dos or brute)" -p 123 {IP}
+```
+
